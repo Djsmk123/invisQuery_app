@@ -1,0 +1,23 @@
+name: Test
+on:
+  push:
+    branches:[main]
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout the code
+        uses: actions/checkout@v2
+      - name: Install and set Flutter version
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: latest
+          channel: stable
+      - name: Restore packages
+        run: flutter analyze
+      - name: Run tests
+        run: flutter test --coverage
+
+
+

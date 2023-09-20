@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "374908802386",
+    "project_id": "askeme",
+    "storage_bucket": "askeme.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:374908802386:android:5a415f540cca9eca06d68b",
+        "android_client_info": {
+          "package_name": "com.smkwinner.invisquery.invisquery"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "374908802386-gn548j3u5uhs2qjoffjp261g9953vfnp.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDHTpe5SOTMoDtkktAChFwMAR0FmfixXbk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "374908802386-gn548j3u5uhs2qjoffjp261g9953vfnp.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

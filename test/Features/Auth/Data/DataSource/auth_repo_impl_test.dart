@@ -57,7 +57,7 @@ void main() {
   "status_code": 200,
   "message": "Request has been served successfully",
   "data": {
-    "access_token1": "token",
+    "access_token": "token",
     "user": {
       "id": 1,
       "username": "test@example.com",
@@ -78,7 +78,7 @@ void main() {
         final result =
             await authRepo.login('test@example.com', 'password', fcmToken);
 
-        expect(result.$1, isNotNull);
+        expect(result.$1, isNull);
         expect(result.$2, isNotNull);
       });
     });

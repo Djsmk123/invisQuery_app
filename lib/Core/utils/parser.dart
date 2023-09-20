@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:developer';
 
 import 'package:invisquery/Core/Errors/failure.dart';
 
@@ -22,13 +23,13 @@ mixin Parser<t> {
   }
 }
 
-class JsonObjectUtils<t> {
-  (Failure?, t?) jsonToObject(t Function() convert) {
+class JsonObjectUtils<T> {
+  (Failure?, T?) jsonToObject(T Function() convert) {
     try {
-      t res = convert();
-      return (null, res);
+      return (null, convert());
     } catch (e) {
-      return (const JsonDecodeFailure(), null);
+      log(e.toString(), name: "jsonDecodeError");
     }
+    return (const JsonDecodeFailure(), null);
   }
 }

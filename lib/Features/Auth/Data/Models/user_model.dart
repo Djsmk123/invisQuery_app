@@ -1,6 +1,4 @@
-import 'package:equatable/equatable.dart';
-
-class UserModel extends Equatable {
+class UserModel {
   final int id;
   final String username;
   final String email;
@@ -17,17 +15,6 @@ class UserModel extends Equatable {
       required this.privateProfileImage,
       required this.createdAt,
       required this.updatedAt});
-
-  @override
-  List<Object?> get props => [
-        id,
-        username,
-        publicProfileImage,
-        email,
-        privateProfileImage,
-        createdAt,
-        updatedAt
-      ];
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
     return UserModel(

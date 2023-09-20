@@ -76,20 +76,15 @@ class NetworkServiceImpl extends NetworkService with Parser {
   }
 
   (Failure?, ApiResponseModel?) processResponse(http.Response response) {
-    if (response.statusCode == 200) {
-      final decodedResponse = stringToJson(response.body.toString());
-
-      if (decodedResponse.$1 != null) {
-        return (decodedResponse.$1, null);
-      }
-
+    final decodedResponse = stringToJson(response.body.toString());
+    if (decodedResponse.$1 == null) {
       final ApiResponseModel model =
           ApiResponseModel.fromJson(decodedResponse.$2);
       return model.success
           ? (null, model)
           : (EndpointFailure(message: model.message), null);
     }
-    return (const EndpointFailure(), null);
+    return (decodedResponse.$1, null);
   }
 
   String buildUrl(String endpoint) =>

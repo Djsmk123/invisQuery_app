@@ -92,7 +92,7 @@ class AuthRepoImpl extends AuthRepo {
   Future<(Failure?, AuthModel?)> socialLogin(String email, String provider,
       String? privateProfileImage, String? fcmToken) {
     return loginHelper(
-      useCase: AuthUseCase.signUp,
+      useCase: AuthUseCase.socialLogin,
       endpoint: '/social-login',
       fcmToken: fcmToken,
       provider: provider,
@@ -154,13 +154,13 @@ class AuthRepoImpl extends AuthRepo {
     }
 
     JsonObjectUtils<AuthModel> utils = JsonObjectUtils<AuthModel>();
-    final obj = utils.jsonToObject(() => AuthModel.fromJson(res.$2!.data));
+    (Failure?, AuthModel?) obj =
+        utils.jsonToObject(() => AuthModel.fromJson(res.$2!.data));
 
     if (obj.$1 != null) {
-      return (res.$1, null);
+      return (obj.$1, null);
     }
     user = obj.$2?.user;
-
     return (null, obj.$2);
   }
 
@@ -181,6 +181,8 @@ class AuthRepoImpl extends AuthRepo {
   }
 
   Future<Failure?> logoutHelper() {
+    accessToken = null;
+    user = null;
     return storageService.deleteAll();
   }
 

@@ -18,7 +18,7 @@ jobs:
 
 
       - name: Restore packages
-        run: flutter pub get  # Use 'flutter pub get' to restore packages
+        run: flutter pub get
 
       - name: Run tests with coverage
         run: flutter test --coverage

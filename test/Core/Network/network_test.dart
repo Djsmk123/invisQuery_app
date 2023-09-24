@@ -21,8 +21,7 @@ void main() {
       connectionChecker = MockInternetConnectionCheckerPlus();
       apiInfo = APIInfo();
       httpClient = MockClient();
-      networkServiceImpl =
-          NetworkServiceImpl(connectionChecker, apiInfo, httpClient);
+      networkServiceImpl = NetworkServiceImpl(connectionChecker, httpClient);
     });
 
     group('check connection', () {

@@ -162,7 +162,7 @@ void main() {
     mockClient = MockClient();
     mockFlutterSecureStorage = MockFlutterSecureStorage();
     networkServiceImpl =
-        NetworkServiceImpl(mockInternetConnectionChecker, apiInfo, mockClient);
+        NetworkServiceImpl(mockInternetConnectionChecker, mockClient);
     storageService = StorageService(mockFlutterSecureStorage);
     authRepo = AuthRepoImpl(networkServiceImpl, storageService);
     when(mockInternetConnectionChecker.hasConnection)

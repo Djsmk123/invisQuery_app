@@ -28,11 +28,11 @@ abstract class NetworkService {
 /// An implementation of the [NetworkService] class.
 class NetworkServiceImpl extends NetworkService with Parser {
   final InternetConnectionCheckerPlus connectionChecker;
-  final APIInfo apiInfo;
-  http.Client client;
+  final APIInfo apiInfo = APIInfo();
+  final http.Client client;
 
   /// Constructor for [NetworkServiceImpl].
-  NetworkServiceImpl(this.connectionChecker, this.apiInfo, this.client);
+  NetworkServiceImpl(this.connectionChecker, this.client);
 
   @override
   Future<bool> get isConnected => connectionChecker.hasConnection;

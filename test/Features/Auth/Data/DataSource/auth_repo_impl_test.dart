@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart';
 import 'package:invisquery/Core/Errors/failure.dart';
@@ -7,9 +5,12 @@ import 'package:invisquery/Core/Network/network.dart';
 import 'package:invisquery/Core/utils/constant.dart';
 import 'package:invisquery/Core/utils/stroage.dart';
 import 'package:invisquery/Features/Auth/Data/DataSource/auth_repo_impl.dart';
+import 'package:invisquery/Features/Auth/Data/Models/auth_model.dart';
+import 'package:invisquery/Features/Auth/Data/Models/user_model.dart';
 import 'package:mockito/mockito.dart';
 
 import '../../../../Core/Network/network_test.mocks.dart';
+import '../../../../Core/utils/mock_response.dart';
 import '../../../../Core/utils/storage_test.mocks.dart';
 
 void main() {
@@ -20,8 +21,141 @@ void main() {
   late MockFlutterSecureStorage mockFlutterSecureStorage;
   late NetworkServiceImpl networkServiceImpl;
   late StorageService storageService;
+  late String tEndpoint;
+  late String fcmToken;
+  late String tToken;
+  late Uri url;
+  void mockPostResponse(Map<String, dynamic> tBody, Response response,
+      {Map<String, String>? headers}) {
+    when(mockClient.post(url,
+            headers: headers ?? apiInfo.defaultHeader,
+            body: tBody,
+            encoding: null))
+        .thenAnswer((v) async => response);
+  }
+
+  void mockGetResponse(Response response,
+      {Map<String, String>? headers, Map<String, String>? query}) {
+    if (query != null) {
+      url = url.replace(queryParameters: query);
+    }
+    /*print(url.toString() + headers.toString() + response.body.toString());*/
+    when(mockClient.get(
+      url,
+      headers: headers ?? apiInfo.defaultHeader,
+    )).thenAnswer((v) async => response);
+  }
+
+  void mockStorageWriteToken(String tToken) {
+    when(mockFlutterSecureStorage.write(key: 'token', value: tToken))
+        .thenAnswer((_) => Future.value());
+  }
+
+  void mockStorageReadToken() {
+    when(mockFlutterSecureStorage.read(key: "token"))
+        .thenAnswer((_) => Future.value());
+  }
+
+  void mockStorageDeleteToken() {
+    when(mockFlutterSecureStorage.deleteAll())
+        .thenAnswer((_) => Future.value());
+  }
+
+  Future<(Failure?, AuthModel?)> performLogin(
+    Uri url,
+    String email,
+    String password,
+    String? fcmToken,
+    Response response,
+  ) async {
+    Map<String, dynamic> tBody = {
+      'email': email,
+      'password': password,
+      'fcm_token': fcmToken,
+    };
+    mockStorageWriteToken(tToken);
+    mockPostResponse(tBody, response);
+
+    return await authRepo.login(email, password, fcmToken);
+  }
+
+  Future<(Failure?, AuthModel?)> performAnonLogin(
+    Uri url,
+    String? fcmToken,
+    Response response,
+  ) async {
+    Map<String, dynamic> tBody = {
+      'fcm_token': fcmToken,
+    };
+    mockPostResponse(tBody, response);
+
+    return await authRepo.anonymous(fcmToken);
+  }
+
+  Future<(Failure?, AuthModel?)> performUserCreation(
+    Uri url,
+    String email,
+    String password,
+    String? fcmToken,
+    Response response,
+  ) async {
+    Map<String, dynamic> tBody = {
+      'email': email,
+      'password': password,
+      'fcm_token': fcmToken,
+    };
+
+    mockStorageWriteToken(tToken);
+    mockPostResponse(tBody, response);
+
+    return await authRepo.signUp(email, password, fcmToken);
+  }
+
+  Future<(Failure?, AuthModel?)> performSocialLogin(
+    Uri url,
+    String email,
+    String provider,
+    String? privateProfileImage,
+    String? fcmToken,
+    Response response,
+  ) async {
+    Map<String, dynamic> tBody = {
+      'email': email,
+      'provider': provider,
+      'fcm_token': fcmToken,
+      'private_profile_image': privateProfileImage
+    };
+    mockStorageWriteToken(tToken);
+    mockPostResponse(tBody, response);
+
+    return await authRepo.socialLogin(
+        email, provider, privateProfileImage, fcmToken);
+  }
+
+  void authSuccessExpection((Failure?, AuthModel?) result) {
+    expect(result.$1, isNull);
+    expect(result.$2, isNotNull);
+    expect(result.$2!.accessToken, equals(authValidJson()['access_token']));
+    expect(result.$2!.toJson(), equals(authValidJson()));
+    expect(result.$2!.user.toJson(), equals(authValidJson()['user']));
+  }
+
+  void authInvalidResponseExpection((Failure?, AuthModel?) result) {
+    expect(result.$1, isNotNull);
+    expect(result.$2, isNull);
+    expect(result.$1, isA<JsonDecodeFailure>());
+  }
+
+  void authFailureResponseExpection(
+      (Failure?, AuthModel?) result, String message) {
+    expect(result.$1, isNotNull);
+    expect(result.$1, isA<EndpointFailure>());
+    expect(result.$1!.message, equals(message));
+  }
 
   setUpAll(() {
+    fcmToken = "fcmToken";
+    tToken = "token";
     // Initialize the AuthRepoImpl with mock dependencies or test-specific ones.
     mockInternetConnectionChecker = MockInternetConnectionCheckerPlus();
     apiInfo = APIInfo();
@@ -35,128 +169,41 @@ void main() {
         .thenAnswer((_) async => true);
   });
   group('login-user', () {
-    late String tEndpoint;
-    late Uri url;
     late String email;
     late String password;
-    late String fcmToken;
-    late String tToken;
     setUpAll(() {
       tEndpoint = '/login';
       url = Uri.parse(networkServiceImpl.buildUrl(tEndpoint));
       email = "test@example.com";
       password = "password";
-      fcmToken = "fcmToken";
-      tToken = "token";
     });
     test('should return AuthModel on success login', () async {
-      Map<String, dynamic> tBody = {
-        'email': email,
-        'password': password,
-        'fcm_token': fcmToken
-      };
-      var userJson = {
-        "id": 1,
-        "username": "test@example.com",
-        "email": "test@example.com",
-        "created_at": "2023-08-22T13:41:29.914846Z",
-        "updated_at": "2023-09-19T12:25:08.183553Z",
-        "public_profile_image":
-            "https://xsgames.co/randomusers/assets/avatars/pixel/42.jpg",
-        "private_profile_image":
-            "https://xsgames.co/randomusers/assets/avatars/pixel/24.jpg"
-      };
-      var authJson = {"access_token": "token", "user": userJson};
-      var apiResponse = {
-        "status_code": 200,
-        "message": "Request has been served successfully",
-        "data": authJson,
-        "success": true
-      };
-      Response response = Response(jsonEncode(apiResponse), 200);
-      when(mockClient.post(url,
-              headers: apiInfo.defaultHeader, body: tBody, encoding: null))
-          .thenAnswer((v) async => response);
-      when(storageService.write("token", tToken))
-          .thenAnswer((_) => Future.value());
-      final result =
-          await authRepo.login('test@example.com', 'password', fcmToken);
-
-      expect(result.$1, isNull);
-      expect(result.$2, isNotNull);
-      expect(result.$2!.accessToken, equals(authJson['access_token']));
-      expect(result.$2!.toJson(), equals(authJson));
-      expect(result.$2!.user.toJson(), equals(userJson));
+      final result = await performLogin(
+          url, email, password, fcmToken, authSuccessResponse());
+      authSuccessExpection(result);
     });
     test('should failed if invalid response received', () async {
-      Map<String, dynamic> tBody = {
-        'email': email,
-        'password': password,
-        'fcm_token': fcmToken
-      };
-      var userJson = {
-        "id": "1",
-        "username": "test@example.com",
-        "email": "test@example.com",
-        "created_at": "2023-08-22T13:41:29.914846Z",
-        "updated_at": "2023-09-19T12:25:08.183553Z",
-        "public_profile_image":
-            "https://xsgames.co/randomusers/assets/avatars/pixel/42.jpg",
-        "private_profile_image":
-            "https://xsgames.co/randomusers/assets/avatars/pixel/24.jpg"
-      };
-      var authJson = {"access_token": "token", "user": userJson};
-      var apiResponse = {
-        "status_code": 200,
-        "message": "Request has been served successfully",
-        "data": authJson,
-        "success": true
-      };
-      Response response = Response(jsonEncode(apiResponse), 200);
-      when(mockClient.post(url,
-              headers: apiInfo.defaultHeader, body: tBody, encoding: null))
-          .thenAnswer((v) async => response);
-      when(storageService.write("token", tToken))
-          .thenAnswer((_) => Future.value());
-      final result =
-          await authRepo.login('test@example.com', 'password', fcmToken);
-
-      expect(result.$1, isNotNull);
-      expect(result.$2, isNull);
-      expect(result.$1, isA<JsonDecodeFailure>());
+      final result = await performLogin(
+          url, email, password, fcmToken, authInvalidResponse());
+      authInvalidResponseExpection(result);
     });
     test('should failed if credentials are invalid', () async {
-      Map<String, dynamic> tBody = {
-        'email': email,
-        'password': password,
-        'fcm_token': fcmToken
-      };
-
-      var apiResponse = {
-        "status_code": 403,
-        "message": "invalid credentials",
-        "data": null,
-        "success": false
-      };
-      Response response = Response(jsonEncode(apiResponse), 403);
-      when(mockClient.post(url,
-              headers: apiInfo.defaultHeader, body: tBody, encoding: null))
-          .thenAnswer((v) async => response);
-
-      final result =
-          await authRepo.login('test@example.com', 'password', fcmToken);
-      expect(result.$1, isNotNull);
-      expect(result.$1, isA<EndpointFailure>());
-      expect(result.$1!.message, equals(apiResponse['message']));
+      final result = await performLogin(
+          url,
+          email,
+          password,
+          fcmToken,
+          failureResponse(
+            code: 403,
+            message: "invalid credentials",
+          ));
+      authFailureResponseExpection(result, "invalid credentials");
     });
   });
+
   group('create-user', () {
-    late String tEndpoint;
-    late Uri url;
     late String email;
     late String password;
-    late String fcmToken;
-    late String tToken;
     setUpAll(() {
       tEndpoint = '/create-user';
       url = Uri.parse(networkServiceImpl.buildUrl(tEndpoint));
@@ -166,453 +213,346 @@ void main() {
       tToken = "token";
     });
     test('should return AuthModel on success login', () async {
-      Map<String, dynamic> tBody = {
-        'email': email,
-        'password': password,
-        'fcm_token': fcmToken
-      };
-      var userJson = {
-        "id": 1,
-        "username": "test@example.com",
-        "email": "test@example.com",
-        "created_at": "2023-08-22T13:41:29.914846Z",
-        "updated_at": "2023-09-19T12:25:08.183553Z",
-        "public_profile_image":
-            "https://xsgames.co/randomusers/assets/avatars/pixel/42.jpg",
-        "private_profile_image":
-            "https://xsgames.co/randomusers/assets/avatars/pixel/24.jpg"
-      };
-      var authJson = {"access_token": "token", "user": userJson};
-      var apiResponse = {
-        "status_code": 200,
-        "message": "Request has been served successfully",
-        "data": authJson,
-        "success": true
-      };
-      Response response = Response(jsonEncode(apiResponse), 200);
-      when(mockClient.post(url,
-              headers: apiInfo.defaultHeader, body: tBody, encoding: null))
-          .thenAnswer((v) async => response);
-      when(storageService.write("token", tToken))
-          .thenAnswer((_) => Future.value());
-      final result =
-          await authRepo.signUp('test@example.com', 'password', fcmToken);
-
-      expect(result.$1, isNull);
-      expect(result.$2, isNotNull);
-      expect(result.$2!.accessToken, equals(authJson['access_token']));
-      expect(result.$2!.toJson(), equals(authJson));
-      expect(result.$2!.user.toJson(), equals(userJson));
+      final result = await performUserCreation(
+          url, email, password, fcmToken, authSuccessResponse());
+      authSuccessExpection(result);
     });
-    test('should failed if invalid response received', () async {
-      Map<String, dynamic> tBody = {
-        'email': email,
-        'password': password,
-        'fcm_token': fcmToken
-      };
-      var userJson = {
-        "id": "1",
-        "username": "test@example.com",
-        "email": "test@example.com",
-        "created_at": "2023-08-22T13:41:29.914846Z",
-        "updated_at": "2023-09-19T12:25:08.183553Z",
-        "public_profile_image":
-            "https://xsgames.co/randomusers/assets/avatars/pixel/42.jpg",
-        "private_profile_image":
-            "https://xsgames.co/randomusers/assets/avatars/pixel/24.jpg"
-      };
-      var authJson = {"access_token": "token", "user": userJson};
-      var apiResponse = {
-        "status_code": 200,
-        "message": "Request has been served successfully",
-        "data": authJson,
-        "success": true
-      };
-      Response response = Response(jsonEncode(apiResponse), 200);
-      when(mockClient.post(url,
-              headers: apiInfo.defaultHeader, body: tBody, encoding: null))
-          .thenAnswer((v) async => response);
-      when(storageService.write("token", tToken))
-          .thenAnswer((_) => Future.value());
-      final result =
-          await authRepo.signUp('test@example.com', 'password', fcmToken);
 
-      expect(result.$1, isNotNull);
-      expect(result.$2, isNull);
-      expect(result.$1, isA<JsonDecodeFailure>());
+    test('should failed if invalid response received', () async {
+      final result = await performUserCreation(
+          url, email, password, fcmToken, authInvalidResponse());
+      authInvalidResponseExpection(result);
     });
     test('should failed if account are already exists', () async {
-      Map<String, dynamic> tBody = {
-        'email': email,
-        'password': password,
-        'fcm_token': fcmToken
-      };
-
-      var apiResponse = {
-        "status_code": 403,
-        "message": "user exist already",
-        "data": null,
-        "success": false
-      };
-      Response response = Response(jsonEncode(apiResponse), 403);
-      when(mockClient.post(url,
-              headers: apiInfo.defaultHeader, body: tBody, encoding: null))
-          .thenAnswer((v) async => response);
-
-      final result =
-          await authRepo.signUp('test@example.com', 'password', fcmToken);
-      expect(result.$1, isNotNull);
-      expect(result.$1, isA<EndpointFailure>());
-      expect(result.$1!.message, equals(apiResponse['message']));
+      final result = await performUserCreation(url, email, password, fcmToken,
+          failureResponse(code: 403, message: "user exist already"));
+      authFailureResponseExpection(result, "user exist already");
     });
   });
   group('anonymous-login', () {
-    late String tEndpoint;
-    late Uri url;
-
-    late String fcmToken;
-    late String tToken;
     setUpAll(() {
       tEndpoint = '/create-ano-user';
       url = Uri.parse(networkServiceImpl.buildUrl(tEndpoint));
-
-      fcmToken = "fcmToken";
-      tToken = "token";
+      mockStorageWriteToken(tToken);
     });
     test('should return AuthModel on success login', () async {
-      Map<String, dynamic> tBody = {'fcm_token': fcmToken};
-      var userJson = {
-        "id": 1,
-        "username": "test@example.com",
-        "email": "test@example.com",
-        "created_at": "2023-08-22T13:41:29.914846Z",
-        "updated_at": "2023-09-19T12:25:08.183553Z",
-        "public_profile_image":
-            "https://xsgames.co/randomusers/assets/avatars/pixel/42.jpg",
-        "private_profile_image":
-            "https://xsgames.co/randomusers/assets/avatars/pixel/24.jpg"
-      };
-      var authJson = {"access_token": "token", "user": userJson};
-      var apiResponse = {
-        "status_code": 200,
-        "message": "Request has been served successfully",
-        "data": authJson,
-        "success": true
-      };
-      Response response = Response(jsonEncode(apiResponse), 200);
-      when(mockClient.post(url,
-              headers: apiInfo.defaultHeader, body: tBody, encoding: null))
-          .thenAnswer((v) async => response);
-      when(storageService.write("token", tToken))
-          .thenAnswer((_) => Future.value());
-      final result = await authRepo.anonymous(fcmToken);
-
-      expect(result.$1, isNull);
-      expect(result.$2, isNotNull);
-      expect(result.$2!.accessToken, equals(authJson['access_token']));
-      expect(result.$2!.toJson(), equals(authJson));
-      expect(result.$2!.user.toJson(), equals(userJson));
+      final result =
+          await performAnonLogin(url, fcmToken, authSuccessResponse());
+      authSuccessExpection(result);
     });
     test('should return AuthModel on success login without fcm token',
         () async {
-      Map<String, dynamic> tBody = {};
-      var userJson = {
-        "id": 1,
-        "username": "test@example.com",
-        "email": "test@example.com",
-        "created_at": "2023-08-22T13:41:29.914846Z",
-        "updated_at": "2023-09-19T12:25:08.183553Z",
-        "public_profile_image":
-            "https://xsgames.co/randomusers/assets/avatars/pixel/42.jpg",
-        "private_profile_image":
-            "https://xsgames.co/randomusers/assets/avatars/pixel/24.jpg"
-      };
-      var authJson = {"access_token": "token", "user": userJson};
-      var apiResponse = {
-        "status_code": 200,
-        "message": "Request has been served successfully",
-        "data": authJson,
-        "success": true
-      };
-      Response response = Response(jsonEncode(apiResponse), 200);
-      when(mockClient.post(url,
-              headers: apiInfo.defaultHeader, body: tBody, encoding: null))
-          .thenAnswer((v) async => response);
-      when(storageService.write("token", tToken))
-          .thenAnswer((_) => Future.value());
-      final result = await authRepo.anonymous(null);
-      expect(result.$1, isNull);
-      expect(result.$2, isNotNull);
-      expect(result.$2!.accessToken, equals(authJson['access_token']));
-      expect(result.$2!.toJson(), equals(authJson));
-      expect(result.$2!.user.toJson(), equals(userJson));
+      final result = await performAnonLogin(url, null, authSuccessResponse());
+      authSuccessExpection(result);
     });
     test('should failed if invalid response received', () async {
-      Map<String, dynamic> tBody = {'fcm_token': fcmToken};
-      var userJson = {
-        "id": "1",
-        "username": "test@example.com",
-        "email": "test@example.com",
-        "created_at": "2023-08-22T13:41:29.914846Z",
-        "updated_at": "2023-09-19T12:25:08.183553Z",
-        "public_profile_image":
-            "https://xsgames.co/randomusers/assets/avatars/pixel/42.jpg",
-        "private_profile_image":
-            "https://xsgames.co/randomusers/assets/avatars/pixel/24.jpg"
-      };
-      var authJson = {"access_token": "token", "user": userJson};
-      var apiResponse = {
-        "status_code": 200,
-        "message": "Request has been served successfully",
-        "data": authJson,
-        "success": true
-      };
-      Response response = Response(jsonEncode(apiResponse), 200);
-      when(mockClient.post(url,
-              headers: apiInfo.defaultHeader, body: tBody, encoding: null))
-          .thenAnswer((v) async => response);
-      when(storageService.write("token", tToken))
-          .thenAnswer((_) => Future.value());
-      final result = await authRepo.anonymous(fcmToken);
-
-      expect(result.$1, isNotNull);
-      expect(result.$2, isNull);
-      expect(result.$1, isA<JsonDecodeFailure>());
+      final result = await performAnonLogin(url, null, authInvalidResponse());
+      authInvalidResponseExpection(result);
     });
   });
   group('social login', () {
-    late String tEndpoint;
-    late Uri url;
     late String email;
-
-    late String fcmToken;
-    late String tToken;
     late String provider;
     late String privateProfileImage;
     setUpAll(() {
       tEndpoint = '/social-login';
       url = Uri.parse(networkServiceImpl.buildUrl(tEndpoint));
       email = "test@example.com";
-
-      fcmToken = "fcmToken";
-      tToken = "token";
       provider = "google";
       privateProfileImage =
           "https://xsgames.co/randomusers/assets/avatars/pixel/24.jpg";
     });
     test('should return AuthModel on success login', () async {
-      Map<String, dynamic> tBody = {
-        'email': email,
-        'private_profile_image': privateProfileImage,
-        'provider': provider,
-        'fcm_token': fcmToken,
-      };
-      var userJson = {
-        "id": 1,
-        "username": "test@example.com",
-        "email": "test@example.com",
-        "created_at": "2023-08-22T13:41:29.914846Z",
-        "updated_at": "2023-09-19T12:25:08.183553Z",
-        "public_profile_image":
-            "https://xsgames.co/randomusers/assets/avatars/pixel/42.jpg",
-        "private_profile_image": privateProfileImage
-      };
-      var authJson = {"access_token": "token", "user": userJson};
-      var apiResponse = {
-        "status_code": 200,
-        "message": "Request has been served successfully",
-        "data": authJson,
-        "success": true
-      };
-      Response response = Response(jsonEncode(apiResponse), 200);
-      when(mockClient.post(url,
-              headers: apiInfo.defaultHeader, body: tBody, encoding: null))
-          .thenAnswer((v) async => response);
-      when(storageService.write("token", tToken))
-          .thenAnswer((_) => Future.value());
-      final result = await authRepo.socialLogin(
-          'test@example.com', provider, privateProfileImage, fcmToken);
-
-      expect(result.$1, isNull);
-      expect(result.$2, isNotNull);
-      expect(result.$2!.accessToken, equals(authJson['access_token']));
-      expect(result.$2!.toJson(), equals(authJson));
-      expect(result.$2!.user.toJson(), equals(userJson));
+      final result = await performSocialLogin(url, email, provider,
+          privateProfileImage, fcmToken, authSuccessResponse());
+      authSuccessExpection(result);
     });
     test('should failed if invalid response received', () async {
-      Map<String, dynamic> tBody = {
-        'email': email,
-        'private_profile_image': privateProfileImage,
-        'fcm_token': fcmToken,
-        'provider': provider,
-      };
-      var userJson = {
-        "id": "1",
-        "username": "test@example.com",
-        "email": "test@example.com",
-        "created_at": "2023-08-22T13:41:29.914846Z",
-        "updated_at": "2023-09-19T12:25:08.183553Z",
-        "public_profile_image":
-            "https://xsgames.co/randomusers/assets/avatars/pixel/42.jpg",
-        "private_profile_image": privateProfileImage,
-      };
-      var authJson = {"access_token": "token", "user": userJson};
-      var apiResponse = {
-        "status_code": 200,
-        "message": "Request has been served successfully",
-        "data": authJson,
-        "success": true
-      };
-      Response response = Response(jsonEncode(apiResponse), 200);
-      when(mockClient.post(url,
-              headers: apiInfo.defaultHeader, body: tBody, encoding: null))
-          .thenAnswer((v) async => response);
-      when(storageService.write("token", tToken))
-          .thenAnswer((_) => Future.value());
-      final result = await authRepo.socialLogin(
-          'test@example.com', provider, privateProfileImage, fcmToken);
+      final result = await performSocialLogin(url, email, provider,
+          privateProfileImage, fcmToken, authInvalidResponse());
+      authInvalidResponseExpection(result);
+    });
+    test('should failed if provider is not provided', () async {
+      final result = await performSocialLogin(
+          url,
+          email,
+          "",
+          null,
+          fcmToken,
+          failureResponse(
+              code: 500,
+              message:
+                  "SocialLoginRequestType.Provider' Error:Field validation for 'Provider' failed on the 'required' tag"));
+      authFailureResponseExpection(result,
+          "SocialLoginRequestType.Provider' Error:Field validation for 'Provider' failed on the 'required' tag");
+    });
+    test('should failed if provider is not different', () async {
+      final result = await performSocialLogin(
+          url,
+          email,
+          "facebook",
+          privateProfileImage,
+          fcmToken,
+          failureResponse(
+              code: 400, message: "not authenticated to requesting this"));
+      authFailureResponseExpection(
+          result, "not authenticated to requesting this");
+    });
+  });
+  Future<Failure?> performLogout(String? tToken, Response response) async {
+    if (tToken != null) {
+      Map<String, String> headers = {'content-type': 'application/json'};
+      headers['authorization'] = "Bearer $tToken";
+      mockPostResponse({}, response, headers: headers);
+    } else {
+      mockPostResponse({}, response);
+    }
+    return await authRepo.logout();
+  }
 
+  Future<Failure?> performAccountDeletion(
+      String? tToken, Response response) async {
+    if (tToken != null) {
+      Map<String, String> headers = {'content-type': 'application/json'};
+      headers['authorization'] = "Bearer ${null}";
+      mockGetResponse(response, headers: headers);
+    } else {
+      mockGetResponse(response);
+    }
+
+    return await authRepo.deleteUser();
+  }
+
+  Future<(Failure?, UserModel?)> fetchUser(
+      String? tToken, Response response) async {
+    if (tToken != null) {
+      Map<String, String> headers = {'content-type': 'application/json'};
+      headers['authorization'] = "Bearer ${null}";
+      mockGetResponse(response, headers: headers);
+    } else {
+      mockGetResponse(response);
+    }
+
+    return await authRepo.getUser();
+  }
+
+  group('logout', () {
+    setUpAll(() {
+      tEndpoint = '/logout';
+      url = Uri.parse(networkServiceImpl.buildUrl(tEndpoint));
+      mockStorageReadToken();
+      mockStorageDeleteToken();
+    });
+
+    test('should return failure message if token is invalid', () async {
+      final result = await performLogout(
+          tToken, failureResponse(code: 401, message: "invalid token"));
+      expect(result, isNotNull);
+      expect(result, isA<EndpointFailure>());
+      expect(result!.message, equals("invalid token"));
+    });
+
+    test('should return failure message if token is expired', () async {
+      final result = await performLogout(
+          tToken, failureResponse(code: 401, message: "token is expired"));
+      expect(result, isNotNull);
+      expect(result, isA<EndpointFailure>());
+      expect(result!.message, equals("token is expired"));
+    });
+    test('should return failure message if token is missing', () async {
+      final result = await performLogout(tToken,
+          failureResponse(code: 401, message: "missing authorization token"));
+      expect(result, isNotNull);
+      expect(result, isA<EndpointFailure>());
+      expect(result!.message, equals("missing authorization token"));
+    });
+    test('should return success message on successfully logout', () async {
+      final result = await performLogout(tToken, successResponse(data: {}));
+      expect(result, isNull);
+      expect(authRepo.user, equals(null));
+      expect(authRepo.accessToken, equals(null));
+    });
+  });
+  group('delete-user', () {
+    setUpAll(() {
+      tEndpoint = '/delete-user';
+      url = Uri.parse(networkServiceImpl.buildUrl(tEndpoint));
+      mockStorageReadToken();
+      mockStorageDeleteToken();
+    });
+
+    test('should return failure message if token is invalid', () async {
+      final result = await performAccountDeletion(
+          tToken, failureResponse(code: 401, message: "invalid token"));
+      expect(result, isNotNull);
+      expect(result, isA<EndpointFailure>());
+      expect(result!.message, equals("invalid token"));
+    });
+    test('should return failure message if token is expired', () async {
+      final result = await performAccountDeletion(
+          tToken, failureResponse(code: 401, message: "token is expired"));
+      expect(result, isNotNull);
+      expect(result, isA<EndpointFailure>());
+      expect(result!.message, equals("token is expired"));
+    });
+
+    test('should return success message on successfully delete', () async {
+      final result =
+          await performAccountDeletion(tToken, successResponse(data: {}));
+      expect(result, isNull);
+      expect(authRepo.user, equals(null));
+      expect(authRepo.accessToken, equals(null));
+    });
+    test('should return failure message if token is missing', () async {
+      final result = await performAccountDeletion(tToken,
+          failureResponse(code: 401, message: "missing authorization token"));
+      expect(result, isNotNull);
+      expect(result, isA<EndpointFailure>());
+      expect(result!.message, equals("missing authorization token"));
+    });
+  });
+  group('get-user', () {
+    setUpAll(() {
+      tEndpoint = '/get-user';
+      url = Uri.parse(networkServiceImpl.buildUrl(tEndpoint));
+      mockStorageReadToken();
+    });
+
+    test('should return failure message if token is invalid', () async {
+      final result = await fetchUser(
+          tToken, failureResponse(code: 401, message: "invalid token"));
+      expect(result.$1, isNotNull);
+      expect(result.$1, isA<EndpointFailure>());
+      expect(result.$1!.message, equals("invalid token"));
+      expect(result.$2, isNull);
+    });
+    test('should return failure message if token is expired', () async {
+      final result = await fetchUser(
+          tToken, failureResponse(code: 401, message: "token is expired"));
+      expect(result.$1, isNotNull);
+      expect(result.$1, isA<EndpointFailure>());
+      expect(result.$1!.message, equals("token is expired"));
+      expect(result.$2, isNull);
+    });
+    test('should return failure message if token is missing', () async {
+      final result = await fetchUser(tToken,
+          failureResponse(code: 401, message: "missing authorization token"));
+      expect(result.$1, isNotNull);
+      expect(result.$1, isA<EndpointFailure>());
+      expect(result.$1!.message, equals("missing authorization token"));
+      expect(result.$2, isNull);
+    });
+    test('should return UserModel message on successfully fetch user',
+        () async {
+      final result = await fetchUser(
+          tToken, successResponse(data: authValidJson()['user']));
+      expect(result.$1, isNull);
+      expect(result.$2, isNotNull);
+      expect(result.$2, isA<UserModel>());
+      expect(authRepo.user!.props, equals(result.$2!.props));
+    });
+    test(
+        'should return failure message on successfully fetch user but invalid response',
+        () async {
+      final result = await fetchUser(
+          tToken, successResponse(data: authInvalidJson()['user']));
       expect(result.$1, isNotNull);
       expect(result.$2, isNull);
       expect(result.$1, isA<JsonDecodeFailure>());
     });
-    test('should failed if provider is not provided', () async {
-      Map<String, dynamic> tBody = {
-        'email': email,
-        'private_profile_image': null,
-        'provider': '',
-        'fcm_token': fcmToken
-      };
-
-      var apiResponse = {
-        "status_code": 500,
-        "message":
-            "Key: 'SocialLoginRequestType.Provider' Error:Field validation for 'Provider' failed on the 'required' tag",
-        "data": null,
-        "success": false
-      };
-      Response response = Response(jsonEncode(apiResponse), 500);
-      when(mockClient.post(url,
-              headers: apiInfo.defaultHeader, body: tBody, encoding: null))
-          .thenAnswer((v) async => response);
-
-      final result =
-          await authRepo.socialLogin('test@example.com', '', null, fcmToken);
-      expect(result.$1, isNotNull);
-      expect(result.$1, isA<EndpointFailure>());
-      expect(result.$1!.message, equals(apiResponse['message']));
-    });
-    test('should failed if provider is not different', () async {
-      provider = "facebook";
-      Map<String, dynamic> tBody = {
-        'email': email,
-        'fcm_token': fcmToken,
-        "provider": provider,
-        'private_profile_image': privateProfileImage,
-      };
-
-      var apiResponse = {
-        "status_code": 400,
-        "message": "not authenticated to requesting this",
-        "data": null,
-        "success": false
-      };
-      Response response = Response(jsonEncode(apiResponse), 400);
-      when(mockClient.post(url,
-              headers: apiInfo.defaultHeader, body: tBody, encoding: null))
-          .thenAnswer((v) async => response);
-
-      final result = await authRepo.socialLogin(
-          'test@example.com', provider, privateProfileImage, fcmToken);
-      expect(result.$1, isNotNull);
-      expect(result.$1, isA<EndpointFailure>());
-      expect(result.$1!.message, equals(apiResponse['message']));
-    });
   });
-  group('logout', () {
-    late String tEndpoint;
-    late Uri url;
+  Future<Failure?> performPasswordReset(
+      String? email, Response response) async {
+    Map<String, String> tBody = {};
+    if (email != null) {
+      tBody['email'] = email;
+    }
+    mockPostResponse(tBody, response);
+    return await authRepo.resetPassword(email);
+  }
 
+  group('password reset', () {
+    late String email;
     setUpAll(() {
-      tEndpoint = '/logout';
+      tEndpoint = '/request-password-reset';
       url = Uri.parse(networkServiceImpl.buildUrl(tEndpoint));
+      email = "test@example.com";
     });
-    test('should return success message on successfully logout', () async {
-      var apiResponse = {
-        "status_code": 200,
-        "message": "Request has been served successfully",
-        "data": "",
-        "success": true
-      };
-      Response response = Response(jsonEncode(apiResponse), 200);
-      when(mockClient.post(url, headers: apiInfo.defaultHeader, body: {}))
-          .thenAnswer((v) async => response);
-      when(storageService.deleteAll()).thenAnswer((_) => Future.value());
-      final result = await authRepo.logout();
-
+    test('should return success message on success password reset request ',
+        () async {
+      final result = await performPasswordReset(email, successResponse());
       expect(result, isNull);
-      expect(authRepo.user, equals(null));
-      expect(authRepo.accessToken, equals(null));
     });
-    test('should return failure message on un-success logout', () async {
-      var apiResponse = {
-        "status_code": 401,
-        "message": "token is expired",
-        "data": null,
-        "success": false,
-      };
-      Response response = Response(jsonEncode(apiResponse), 401);
-      when(mockClient.post(url, headers: apiInfo.defaultHeader, body: {}))
-          .thenAnswer((v) async => response);
-      when(storageService.deleteAll()).thenAnswer((_) => Future.value());
-      final result = await authRepo.logout();
-
+    test('should return failed message if email is not not provided', () async {
+      final result = await performPasswordReset(
+          null,
+          failureResponse(
+              code: 500,
+              message:
+                  "Key: 'PasswordResetRequest.Email' Error:Field validation for 'Email' failed on the 'required' tag"));
       expect(result, isNotNull);
-      expect(result, isA<EndpointFailure>());
-      expect(result!.message, equals(apiResponse['message']));
+      expect(
+          result!.message,
+          equals(
+              "Key: 'PasswordResetRequest.Email' Error:Field validation for 'Email' failed on the 'required' tag"));
+    });
+    test('should return failed message if user is not exist', () async {
+      final result = await performPasswordReset(
+          email, failureResponse(code: 404, message: "user not exist"));
+      expect(result, isNotNull);
+      expect(result!.message, equals("user not exist"));
+    });
+    test(
+        'should return failed message if email is either non-password based or anonymous account',
+        () async {
+      final result = await performPasswordReset(
+          email,
+          failureResponse(
+              code: 400, message: "not authenticated to requesting this"));
+      expect(result, isNotNull);
+      expect(result!.message, equals("not authenticated to requesting this"));
     });
   });
-  group('delete', () {
-    late String tEndpoint;
-    late Uri url;
+}
 
-    setUpAll(() {
-      tEndpoint = '/delete-user';
-      url = Uri.parse(networkServiceImpl.buildUrl(tEndpoint));
-    });
-    test('should return success message on successfully delete', () async {
-      var apiResponse = {
-        "status_code": 200,
-        "message": "Request has been served successfully",
-        "data": "",
-        "success": true
-      };
-      Response response = Response(jsonEncode(apiResponse), 200);
-      when(mockClient.get(url, headers: apiInfo.defaultHeader))
-          .thenAnswer((v) async => response);
-      when(storageService.deleteAll()).thenAnswer((_) => Future.value());
-      final result = await authRepo.deleteUser();
+//Success json Response
+Response authSuccessResponse() {
+  return successResponse(data: authValidJson());
+}
 
-      expect(result, isNull);
-      expect(authRepo.user, equals(null));
-      expect(authRepo.accessToken, equals(null));
-    });
-    test('should return failure message on un-success delete', () async {
-      var apiResponse = {
-        "status_code": 401,
-        "message": "token is expired",
-        "data": null,
-        "success": false,
-      };
-      Response response = Response(jsonEncode(apiResponse), 401);
-      when(mockClient.get(url, headers: apiInfo.defaultHeader))
-          .thenAnswer((v) async => response);
-      when(storageService.deleteAll()).thenAnswer((_) => Future.value());
-      final result = await authRepo.deleteUser();
+//Invalid json Response
+Response authInvalidResponse() {
+  return successResponse(data: authInvalidJson());
+}
 
-      expect(result, isNotNull);
-      expect(result, isA<EndpointFailure>());
-      expect(result!.message, equals(apiResponse['message']));
-    });
-  });
+Map<String, dynamic> authInvalidJson() {
+  var userJson = {
+    "id": "1",
+    "username": "test@example.com",
+    "email": "test@example.com",
+    "created_at": "2023-08-22T13:41:29.914846Z",
+    "updated_at": "2023-09-19T12:25:08.183553Z",
+    "public_profile_image":
+        "https://xsgames.co/randomusers/assets/avatars/pixel/42.jpg",
+    "private_profile_image":
+        "https://xsgames.co/randomusers/assets/avatars/pixel/24.jpg"
+  };
+  var authJson = {"access_token": "token", "user": userJson};
+  return authJson;
+}
+
+Map<String, dynamic> authValidJson() {
+  var userJson = {
+    "id": 1,
+    "username": "test@example.com",
+    "email": "test@example.com",
+    "created_at": "2023-08-22T13:41:29.914846Z",
+    "updated_at": "2023-09-19T12:25:08.183553Z",
+    "public_profile_image":
+        "https://xsgames.co/randomusers/assets/avatars/pixel/42.jpg",
+    "private_profile_image":
+        "https://xsgames.co/randomusers/assets/avatars/pixel/24.jpg"
+  };
+  var authJson = {"access_token": "token", "user": userJson};
+  return authJson;
 }

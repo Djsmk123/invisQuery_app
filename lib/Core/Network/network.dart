@@ -65,11 +65,12 @@ class NetworkServiceImpl extends NetworkService with Parser {
       var uri = Uri.parse(buildUrl(endpoint));
 
       final encodedData = jsonToString(data);
-
       if (encodedData.$1 != null) {
         return (const JsonEncodeFailure(), null);
       }
+
       final response = await client.post(uri, headers: headers, body: data);
+
       return processResponse(response);
     }
     return (const InternetConnectionFailure(), null);

@@ -43,8 +43,12 @@ void main() {
 
     test('toJson', () {
       // Create a sample ApiResponseModel instance
-      const model =
-          ApiResponseModel(200, 'Success', {'name': 'John Doe'}, true);
+      const model = ApiResponseModel(
+        success: true,
+        message: "Success",
+        data: {'name': 'John Doe'},
+        statusCode: 200,
+      );
 
       // Call the toJson method
       final json = model.toJson();
@@ -58,10 +62,19 @@ void main() {
 
     test('props', () {
       // Create two ApiResponseModel instances with the same values
-      const model1 =
-          ApiResponseModel(200, 'Success', {'name': 'John Doe'}, true);
-      const model2 =
-          ApiResponseModel(200, 'Success', {'name': 'John Doe'}, true);
+      const model1 = ApiResponseModel(
+        success: true,
+        message: "Success",
+        data: {'name': 'John Doe'},
+        statusCode: 200,
+      );
+
+      const model2 = ApiResponseModel(
+        success: true,
+        message: "Success",
+        data: {'name': 'John Doe'},
+        statusCode: 200,
+      );
 
       // Assertions
       expect(model1.props, model2.props);

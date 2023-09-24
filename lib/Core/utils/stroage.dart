@@ -10,11 +10,9 @@ class StorageService {
   Future<(Failure?, String?)> readStorage(String key) async {
     try {
       String? value = await storageService.read(key: key);
-
       if (value == null) {
         return (const StorageFailure(message: "Required key not found"), null);
       }
-
       return (null, value);
     } catch (e) {
       log(e.toString());

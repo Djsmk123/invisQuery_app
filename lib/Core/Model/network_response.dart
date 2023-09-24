@@ -7,14 +7,17 @@ class ApiResponseModel extends Equatable {
   final bool success;
 
   const ApiResponseModel(
-      this.statusCode, this.message, this.data, this.success);
+      {required this.statusCode,
+      required this.message,
+      this.data,
+      required this.success});
 
   factory ApiResponseModel.fromJson(Map<String, dynamic> json) {
     return ApiResponseModel(
-      json['status_code'],
-      json['message'],
-      json['data'],
-      json['success'],
+      statusCode: json['status_code'],
+      message: json['message'],
+      data: json['data'],
+      success: json['success'],
     );
   }
 

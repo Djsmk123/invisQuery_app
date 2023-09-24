@@ -36,7 +36,8 @@ class AuthRepoImpl extends AuthRepo {
 
   @override
   Future<Failure?> deleteUser() async {
-    final res = await networkService.get(endpoint: '/delete-user');
+    final res = await networkService.get(
+        endpoint: '/delete-user', headers: await getHeaderWithToken());
     if (res.$1 != null) {
       return (res.$1);
     }
@@ -46,14 +47,15 @@ class AuthRepoImpl extends AuthRepo {
 
   @override
   Future<(Failure?, UserModel?)> getUser() async {
-    final res = await networkService.get(endpoint: '/get-user');
+    final res = await networkService.get(
+        endpoint: '/get-user', headers: await getHeaderWithToken());
     if (res.$1 != null) {
       return (res.$1, null);
     }
     JsonObjectUtils<UserModel> utils = JsonObjectUtils<UserModel>();
     final obj = utils.jsonToObject(() => UserModel.fromJson(res.$2!.data));
     if (obj.$1 != null) {
-      return (res.$1, null);
+      return (obj.$1, null);
     }
     user = obj.$2;
     return (null, obj.$2);
@@ -61,18 +63,23 @@ class AuthRepoImpl extends AuthRepo {
 
   @override
   Future<Failure?> logout() async {
-    final res = await networkService.post(endpoint: '/logout', data: {});
+    final res = await networkService.post(
+        endpoint: '/logout', data: {}, headers: await getHeaderWithToken());
     if (res.$1 != null) {
       return (res.$1);
     }
     final storage = logoutHelper();
-    return (storage);
+    return storage;
   }
 
   @override
-  Future<Failure?> resetPassword(String email) async {
-    final res = await networkService
-        .post(endpoint: '/request-password-reset', data: {'email': email});
+  Future<Failure?> resetPassword(String? email) async {
+    Map<String, String> data = {};
+    if (email != null) {
+      data['email'] = email;
+    }
+    final res = await networkService.post(
+        endpoint: '/request-password-reset', data: data);
     return (res.$1);
   }
 
@@ -111,9 +118,7 @@ class AuthRepoImpl extends AuthRepo {
     String? privateProfileImage,
   }) async {
     Map<String, dynamic> body = {};
-    if (fcmToken != null) {
-      body['fcm_token'] = fcmToken;
-    }
+    body['fcm_token'] = fcmToken;
     switch (useCase) {
       case AuthUseCase.login:
         body = {
@@ -161,6 +166,12 @@ class AuthRepoImpl extends AuthRepo {
       return (obj.$1, null);
     }
     user = obj.$2?.user;
+    final s = await storageService.write('token', obj.$2!.accessToken);
+
+    if (s != null) {
+      return (s, null);
+    }
+    accessToken = obj.$2!.accessToken;
     return (null, obj.$2);
   }
 
@@ -172,7 +183,7 @@ class AuthRepoImpl extends AuthRepo {
     if (accessToken != null) {
       return (null, accessToken);
     }
-    final res = await storageService.readStorage('access_token');
+    final res = await storageService.readStorage('token');
     if (res.$1 != null) {
       return (res.$1, null);
     }
@@ -184,6 +195,15 @@ class AuthRepoImpl extends AuthRepo {
     accessToken = null;
     user = null;
     return storageService.deleteAll();
+  }
+
+  Future<Map<String, String>> getHeaderWithToken() async {
+    var accessToken = await getAccessToken();
+
+    return {
+      'content-type': 'application/json',
+      'authorization': 'Bearer ${accessToken.$2}'
+    };
   }
 
   @override

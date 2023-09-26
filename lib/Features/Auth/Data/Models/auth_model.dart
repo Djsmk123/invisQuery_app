@@ -8,12 +8,11 @@ class AuthModel {
 
   factory AuthModel.fromJson(Map<String, dynamic> json) {
     return AuthModel(
-        accessToken: json['access_token'],
-        user: UserModel.fromJson(json['user']));
+        accessToken: json['token'], user: UserModel.fromJson(json['user']));
   }
   Map<String, dynamic> toJson() {
     return {
-      'access_token': accessToken,
+      'token': accessToken,
       'user': user.toJson(),
     };
   }

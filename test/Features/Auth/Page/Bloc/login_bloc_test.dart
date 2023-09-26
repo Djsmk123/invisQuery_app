@@ -40,6 +40,7 @@ void main() {
         email: email,
         password: password,
         fcmToken: fcmToken,
+        isNewAccount: false,
       )),
       expect: () => [
         const LoginLoading(LoginStates.basic),
@@ -59,6 +60,7 @@ void main() {
         email: email,
         password: password,
         fcmToken: fcmToken,
+        isNewAccount: false,
       )),
       expect: () => [
         const LoginLoading(LoginStates.basic),

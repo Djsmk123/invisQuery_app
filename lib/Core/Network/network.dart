@@ -4,6 +4,7 @@ import 'package:invisquery/Core/Errors/failure.dart';
 import 'package:invisquery/Core/Model/network_response.dart';
 import 'package:invisquery/Core/utils/constant.dart';
 import 'package:invisquery/Core/utils/parser.dart';
+import 'package:pretty_http_logger/pretty_http_logger.dart';
 
 /// An abstract class defining methods for network-related operations.
 abstract class NetworkService {
@@ -29,7 +30,7 @@ abstract class NetworkService {
 class NetworkServiceImpl extends NetworkService with Parser {
   final InternetConnectionCheckerPlus connectionChecker;
   final APIInfo apiInfo = APIInfo();
-  final http.Client client;
+  final HttpWithMiddleware client;
 
   /// Constructor for [NetworkServiceImpl].
   NetworkServiceImpl(this.connectionChecker, this.client);
@@ -69,7 +70,8 @@ class NetworkServiceImpl extends NetworkService with Parser {
         return (const JsonEncodeFailure(), null);
       }
 
-      final response = await client.post(uri, headers: headers, body: data);
+      final response =
+          await client.post(uri, headers: headers, body: encodedData.$2);
 
       return processResponse(response);
     }

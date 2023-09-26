@@ -8,10 +8,25 @@ class LoginPasswordBasedEvent extends LoginEvent {
   final String password;
   final String email;
   final String? fcmToken;
-  const LoginPasswordBasedEvent(
-      {required this.password, required this.email, this.fcmToken});
+  final bool isNewAccount;
+  const LoginPasswordBasedEvent({
+    required this.password,
+    required this.email,
+    this.fcmToken,
+    required this.isNewAccount,
+  });
   @override
   List<Object?> get props => [password, email, fcmToken];
+}
+
+class AnonLogin extends LoginEvent {
+  final String? fcmToken;
+
+  const AnonLogin({
+    this.fcmToken,
+  });
+  @override
+  List<Object?> get props => [fcmToken];
 }
 
 class ResetPasswordEvent extends LoginEvent {

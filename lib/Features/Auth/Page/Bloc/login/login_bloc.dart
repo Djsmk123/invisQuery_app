@@ -13,12 +13,32 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
     on<LoginEvent>((event, emit) async {
       if (event is LoginPasswordBasedEvent) {
         emit(const LoginLoading(LoginStates.basic));
-        final res =
-            await authRepo.login(event.email, event.password, event.fcmToken);
+        final res = !event.isNewAccount
+            ? await authRepo.login(event.email, event.password, event.fcmToken)
+            : (await authRepo.signUp(
+                event.email, event.password, event.fcmToken));
         if (res.$1 != null) {
           emit(FailureLogin(LoginStates.basic, res.$1!));
         } else {
           emit(LoginSuccess(LoginStates.basic, res.$2!));
+        }
+      }
+      if (event is AnonLogin) {
+        emit(const LoginLoading(LoginStates.basic));
+        final res = await authRepo.anonymous(event.fcmToken);
+        if (res.$1 != null) {
+          emit(FailureLogin(LoginStates.anonymousLogin, res.$1!));
+        } else {
+          emit(LoginSuccess(LoginStates.anonymousLogin, res.$2!));
+        }
+      }
+      if (event is ResetPasswordEvent) {
+        emit(const LoginLoading(LoginStates.forgotPassword));
+        final res = await authRepo.resetPassword(event.email);
+        if (res == null) {
+          emit(LoginPasswordResetSuccess());
+        } else {
+          emit(FailureLogin(LoginStates.forgotPassword, res));
         }
       }
     });

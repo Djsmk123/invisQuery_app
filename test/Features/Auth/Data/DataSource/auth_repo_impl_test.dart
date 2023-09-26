@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart';
 import 'package:invisquery/Core/Errors/failure.dart';
@@ -17,7 +19,7 @@ void main() {
   late AuthRepoImpl authRepo;
   late MockInternetConnectionCheckerPlus mockInternetConnectionChecker;
   late APIInfo apiInfo;
-  late MockClient mockClient;
+  late MockHttpWithMiddleware mockClient;
   late MockFlutterSecureStorage mockFlutterSecureStorage;
   late NetworkServiceImpl networkServiceImpl;
   late StorageService storageService;
@@ -27,11 +29,11 @@ void main() {
   late Uri url;
   void mockPostResponse(Map<String, dynamic> tBody, Response response,
       {Map<String, String>? headers}) {
-    when(mockClient.post(url,
-            headers: headers ?? apiInfo.defaultHeader,
-            body: tBody,
-            encoding: null))
-        .thenAnswer((v) async => response);
+    when(mockClient.post(
+      url,
+      headers: headers ?? apiInfo.defaultHeader,
+      body: jsonEncode(tBody),
+    )).thenAnswer((v) async => response);
   }
 
   void mockGetResponse(Response response,
@@ -84,9 +86,11 @@ void main() {
     String? fcmToken,
     Response response,
   ) async {
-    Map<String, dynamic> tBody = {
-      'fcm_token': fcmToken,
-    };
+    Map<String, dynamic> tBody = {};
+
+    if (fcmToken != null) {
+      tBody['fcm_token'] = fcmToken;
+    }
     mockPostResponse(tBody, response);
 
     return await authRepo.anonymous(fcmToken);
@@ -122,10 +126,12 @@ void main() {
     Map<String, dynamic> tBody = {
       'email': email,
       'provider': provider,
-      'fcm_token': fcmToken,
       'private_profile_image': privateProfileImage
     };
-    mockStorageWriteToken(tToken);
+    if (fcmToken != null) {
+      tBody['fcm_token'] = fcmToken;
+    }
+
     mockPostResponse(tBody, response);
 
     return await authRepo.socialLogin(
@@ -135,7 +141,7 @@ void main() {
   void authSuccessExpection((Failure?, AuthModel?) result) {
     expect(result.$1, isNull);
     expect(result.$2, isNotNull);
-    expect(result.$2!.accessToken, equals(authValidJson()['access_token']));
+    expect(result.$2!.accessToken, equals(authValidJson()['token']));
     expect(result.$2!.toJson(), equals(authValidJson()));
     expect(result.$2!.user.toJson(), equals(authValidJson()['user']));
   }
@@ -159,7 +165,7 @@ void main() {
     // Initialize the AuthRepoImpl with mock dependencies or test-specific ones.
     mockInternetConnectionChecker = MockInternetConnectionCheckerPlus();
     apiInfo = APIInfo();
-    mockClient = MockClient();
+    mockClient = MockHttpWithMiddleware();
     mockFlutterSecureStorage = MockFlutterSecureStorage();
     networkServiceImpl =
         NetworkServiceImpl(mockInternetConnectionChecker, mockClient);
@@ -172,7 +178,7 @@ void main() {
     late String email;
     late String password;
     setUpAll(() {
-      tEndpoint = '/login';
+      tEndpoint = '/login-user';
       url = Uri.parse(networkServiceImpl.buildUrl(tEndpoint));
       email = "test@example.com";
       password = "password";
@@ -261,6 +267,7 @@ void main() {
       provider = "google";
       privateProfileImage =
           "https://xsgames.co/randomusers/assets/avatars/pixel/24.jpg";
+      mockStorageWriteToken(tToken);
     });
     test('should return AuthModel on success login', () async {
       final result = await performSocialLogin(url, email, provider,
@@ -537,7 +544,7 @@ Map<String, dynamic> authInvalidJson() {
     "private_profile_image":
         "https://xsgames.co/randomusers/assets/avatars/pixel/24.jpg"
   };
-  var authJson = {"access_token": "token", "user": userJson};
+  var authJson = {"token": "token", "user": userJson};
   return authJson;
 }
 
@@ -553,6 +560,6 @@ Map<String, dynamic> authValidJson() {
     "private_profile_image":
         "https://xsgames.co/randomusers/assets/avatars/pixel/24.jpg"
   };
-  var authJson = {"access_token": "token", "user": userJson};
+  var authJson = {"token": "token", "user": userJson};
   return authJson;
 }

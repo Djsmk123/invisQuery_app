@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_easyloading/flutter_easyloading.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:invisquery/Core/utils/theme.dart';
 import 'package:invisquery/Features/Auth/Page/Bloc/login/login_bloc.dart';
 import 'package:invisquery/Features/Auth/Page/View/login_screen.dart';
 
@@ -23,8 +26,14 @@ class MyApp extends StatelessWidget {
               LoginBloc(di.getIt()), // Create your LoginBloc here
         ),
       ],
-      child: const MaterialApp(
-        home: LoginScreen(),
+      child: ScreenUtilInit(
+        designSize: const Size(360, 800),
+        child: MaterialApp(
+          debugShowCheckedModeBanner: false,
+          theme: CustomTheme.data,
+          builder: EasyLoading.init(),
+          home: const LoginScreen(),
+        ),
       ),
     );
   }

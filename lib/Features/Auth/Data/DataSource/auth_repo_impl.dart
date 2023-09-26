@@ -18,7 +18,7 @@ class AuthRepoImpl extends AuthRepo {
       String email, String password, String? fcmToken) async {
     return loginHelper(
       useCase: AuthUseCase.login,
-      endpoint: '/login',
+      endpoint: '/login-user',
       password: password,
       fcmToken: fcmToken,
       email: email,
@@ -118,7 +118,7 @@ class AuthRepoImpl extends AuthRepo {
     String? privateProfileImage,
   }) async {
     Map<String, dynamic> body = {};
-    body['fcm_token'] = fcmToken;
+
     switch (useCase) {
       case AuthUseCase.login:
         body = {

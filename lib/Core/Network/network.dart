@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:http/http.dart' as http;
 import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
 import 'package:invisquery/Core/Errors/failure.dart';
@@ -50,7 +52,9 @@ class NetworkServiceImpl extends NetworkService with Parser {
         uri = uri.replace(queryParameters: query);
       }
 
-      final response = await client.get(uri, headers: headers);
+      final response = await client
+          .get(uri, headers: headers)
+          .timeout(const Duration(seconds: 30), onTimeout: onTimeout);
       return processResponse(response);
     }
     return (const InternetConnectionFailure(), null);
@@ -70,8 +74,9 @@ class NetworkServiceImpl extends NetworkService with Parser {
         return (const JsonEncodeFailure(), null);
       }
 
-      final response =
-          await client.post(uri, headers: headers, body: encodedData.$2);
+      final response = await client
+          .post(uri, headers: headers, body: encodedData.$2)
+          .timeout(const Duration(seconds: 30), onTimeout: onTimeout);
 
       return processResponse(response);
     }
@@ -95,4 +100,12 @@ class NetworkServiceImpl extends NetworkService with Parser {
       apiInfo.subBaseUrl() +
       apiInfo.apiVersion() +
       endpoint;
+  http.Response onTimeout() => http.Response(
+      jsonEncode({
+        'status_code': 408,
+        'message': "Connection timeout,Try again",
+        'data': null,
+        'success': false
+      }),
+      408);
 }

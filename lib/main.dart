@@ -4,7 +4,7 @@ import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:invisquery/Core/utils/theme.dart';
 import 'package:invisquery/Features/Auth/Page/Bloc/login/login_bloc.dart';
-import 'package:invisquery/Features/Auth/Page/View/login_screen.dart';
+import 'package:invisquery/routing/routes.dart';
 
 import 'get_init.dart' as di;
 
@@ -28,11 +28,11 @@ class MyApp extends StatelessWidget {
       ],
       child: ScreenUtilInit(
         designSize: const Size(360, 800),
-        child: MaterialApp(
+        child: MaterialApp.router(
           debugShowCheckedModeBanner: false,
           theme: CustomTheme.data,
+          routerConfig: AppRoutes().routes,
           builder: EasyLoading.init(),
-          home: const LoginScreen(),
         ),
       ),
     );

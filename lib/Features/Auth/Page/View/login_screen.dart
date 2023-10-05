@@ -83,7 +83,7 @@ class _LoginScreenState extends State<LoginScreen> with ValidationMixin {
                     key: formState,
                     child: SingleChildScrollView(
                       child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
                           Center(
                               child: Text(

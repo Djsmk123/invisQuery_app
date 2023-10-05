@@ -199,11 +199,12 @@ class AuthRepoImpl extends AuthRepo {
 
   Future<Map<String, String>> getHeaderWithToken() async {
     var accessToken = await getAccessToken();
-
-    return {
+    var header = {
       'content-type': 'application/json',
       'authorization': 'Bearer ${accessToken.$2}'
     };
+
+    return header;
   }
 
   @override

@@ -65,6 +65,7 @@ class MockAuthRepoImpl extends _i1.Mock implements _i4.AuthRepoImpl {
           Invocation.getter(#networkService),
         ),
       ) as _i2.NetworkServiceImpl);
+
   @override
   _i3.StorageService get storageService => (super.noSuchMethod(
         Invocation.getter(#storageService),
@@ -73,6 +74,7 @@ class MockAuthRepoImpl extends _i1.Mock implements _i4.AuthRepoImpl {
           Invocation.getter(#storageService),
         ),
       ) as _i3.StorageService);
+
   @override
   set accessToken(String? _accessToken) => super.noSuchMethod(
         Invocation.setter(
@@ -81,6 +83,7 @@ class MockAuthRepoImpl extends _i1.Mock implements _i4.AuthRepoImpl {
         ),
         returnValueForMissingStub: null,
       );
+
   @override
   set user(_i5.UserModel? _user) => super.noSuchMethod(
         Invocation.setter(
@@ -89,6 +92,7 @@ class MockAuthRepoImpl extends _i1.Mock implements _i4.AuthRepoImpl {
         ),
         returnValueForMissingStub: null,
       );
+
   @override
   _i6.Future<(_i7.Failure?, _i8.AuthModel?)> login(
     String? email,
@@ -107,6 +111,7 @@ class MockAuthRepoImpl extends _i1.Mock implements _i4.AuthRepoImpl {
         returnValue:
             _i6.Future<(_i7.Failure?, _i8.AuthModel?)>.value((null, null)),
       ) as _i6.Future<(_i7.Failure?, _i8.AuthModel?)>);
+
   @override
   _i6.Future<(_i7.Failure?, _i8.AuthModel?)> anonymous(String? fcmToken) =>
       (super.noSuchMethod(
@@ -117,6 +122,7 @@ class MockAuthRepoImpl extends _i1.Mock implements _i4.AuthRepoImpl {
         returnValue:
             _i6.Future<(_i7.Failure?, _i8.AuthModel?)>.value((null, null)),
       ) as _i6.Future<(_i7.Failure?, _i8.AuthModel?)>);
+
   @override
   _i6.Future<_i7.Failure?> deleteUser() => (super.noSuchMethod(
         Invocation.method(
@@ -125,6 +131,7 @@ class MockAuthRepoImpl extends _i1.Mock implements _i4.AuthRepoImpl {
         ),
         returnValue: _i6.Future<_i7.Failure?>.value(),
       ) as _i6.Future<_i7.Failure?>);
+
   @override
   _i6.Future<(_i7.Failure?, _i5.UserModel?)> getUser() => (super.noSuchMethod(
         Invocation.method(
@@ -134,6 +141,7 @@ class MockAuthRepoImpl extends _i1.Mock implements _i4.AuthRepoImpl {
         returnValue:
             _i6.Future<(_i7.Failure?, _i5.UserModel?)>.value((null, null)),
       ) as _i6.Future<(_i7.Failure?, _i5.UserModel?)>);
+
   @override
   _i6.Future<_i7.Failure?> logout() => (super.noSuchMethod(
         Invocation.method(
@@ -142,6 +150,7 @@ class MockAuthRepoImpl extends _i1.Mock implements _i4.AuthRepoImpl {
         ),
         returnValue: _i6.Future<_i7.Failure?>.value(),
       ) as _i6.Future<_i7.Failure?>);
+
   @override
   _i6.Future<_i7.Failure?> resetPassword(String? email) => (super.noSuchMethod(
         Invocation.method(
@@ -150,6 +159,7 @@ class MockAuthRepoImpl extends _i1.Mock implements _i4.AuthRepoImpl {
         ),
         returnValue: _i6.Future<_i7.Failure?>.value(),
       ) as _i6.Future<_i7.Failure?>);
+
   @override
   _i6.Future<(_i7.Failure?, _i8.AuthModel?)> signUp(
     String? email,
@@ -168,6 +178,7 @@ class MockAuthRepoImpl extends _i1.Mock implements _i4.AuthRepoImpl {
         returnValue:
             _i6.Future<(_i7.Failure?, _i8.AuthModel?)>.value((null, null)),
       ) as _i6.Future<(_i7.Failure?, _i8.AuthModel?)>);
+
   @override
   _i6.Future<(_i7.Failure?, _i8.AuthModel?)> socialLogin(
     String? email,
@@ -188,6 +199,7 @@ class MockAuthRepoImpl extends _i1.Mock implements _i4.AuthRepoImpl {
         returnValue:
             _i6.Future<(_i7.Failure?, _i8.AuthModel?)>.value((null, null)),
       ) as _i6.Future<(_i7.Failure?, _i8.AuthModel?)>);
+
   @override
   _i6.Future<(_i7.Failure?, _i8.AuthModel?)> loginHelper({
     required _i9.AuthUseCase? useCase,
@@ -215,6 +227,7 @@ class MockAuthRepoImpl extends _i1.Mock implements _i4.AuthRepoImpl {
         returnValue:
             _i6.Future<(_i7.Failure?, _i8.AuthModel?)>.value((null, null)),
       ) as _i6.Future<(_i7.Failure?, _i8.AuthModel?)>);
+
   @override
   _i6.Future<(_i7.Failure?, String?)> getAccessToken() => (super.noSuchMethod(
         Invocation.method(
@@ -223,6 +236,7 @@ class MockAuthRepoImpl extends _i1.Mock implements _i4.AuthRepoImpl {
         ),
         returnValue: _i6.Future<(_i7.Failure?, String?)>.value((null, null)),
       ) as _i6.Future<(_i7.Failure?, String?)>);
+
   @override
   _i6.Future<_i7.Failure?> logoutHelper() => (super.noSuchMethod(
         Invocation.method(
@@ -231,6 +245,7 @@ class MockAuthRepoImpl extends _i1.Mock implements _i4.AuthRepoImpl {
         ),
         returnValue: _i6.Future<_i7.Failure?>.value(),
       ) as _i6.Future<_i7.Failure?>);
+
   @override
   _i6.Future<Map<String, String>> getHeaderWithToken() => (super.noSuchMethod(
         Invocation.method(

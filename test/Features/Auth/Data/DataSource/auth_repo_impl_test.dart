@@ -17,7 +17,7 @@ import '../../../../Core/utils/storage_test.mocks.dart';
 
 void main() {
   late AuthRepoImpl authRepo;
-  late MockInternetConnectionCheckerPlus mockInternetConnectionChecker;
+  late MockInternetConnection mockInternetConnectionChecker;
   late APIInfo apiInfo;
   late MockHttpWithMiddleware mockClient;
   late MockFlutterSecureStorage mockFlutterSecureStorage;
@@ -163,7 +163,7 @@ void main() {
     fcmToken = "fcmToken";
     tToken = "token";
     // Initialize the AuthRepoImpl with mock dependencies or test-specific ones.
-    mockInternetConnectionChecker = MockInternetConnectionCheckerPlus();
+    mockInternetConnectionChecker = MockInternetConnection();
     apiInfo = APIInfo();
     mockClient = MockHttpWithMiddleware();
     mockFlutterSecureStorage = MockFlutterSecureStorage();
@@ -171,7 +171,7 @@ void main() {
         NetworkServiceImpl(mockInternetConnectionChecker, mockClient);
     storageService = StorageService(mockFlutterSecureStorage);
     authRepo = AuthRepoImpl(networkServiceImpl, storageService);
-    when(mockInternetConnectionChecker.hasConnection)
+    when(mockInternetConnectionChecker.hasInternetAccess)
         .thenAnswer((_) async => true);
   });
   group('login-user', () {

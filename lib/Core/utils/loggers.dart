@@ -7,9 +7,10 @@ class HttpLogger extends MiddlewareContract {
   HttpLogger(this.logger);
   @override
   void interceptRequest(RequestData data) {
-    logger.d("Method: ${data.method}");
-    logger.d("Url: ${data.url}");
-    logger.d("Body: ${data.body}");
+    logger.d("Method: ${data.method.name}");
+    logger.d("Url: ${data.url.toString()}");
+    logger.d("Headers ${data.headers.toString()}");
+    logger.d("Body: ${data.body.toString()}");
   }
 
   @override

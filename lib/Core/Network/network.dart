@@ -30,7 +30,7 @@ abstract class NetworkService {
 
 /// An implementation of the [NetworkService] class.
 class NetworkServiceImpl extends NetworkService with Parser {
-  final InternetConnectionCheckerPlus connectionChecker;
+  final InternetConnection connectionChecker;
   final APIInfo apiInfo = APIInfo();
   final HttpWithMiddleware client;
 
@@ -38,8 +38,9 @@ class NetworkServiceImpl extends NetworkService with Parser {
   NetworkServiceImpl(this.connectionChecker, this.client);
 
   @override
-  Future<bool> get isConnected => connectionChecker.hasConnection;
-
+  Future<bool> get isConnected => connectionChecker.hasInternetAccess;
+  //for re-trying
+  int maxRetries = 3;
   @override
   Future<(Failure?, ApiResponseModel?)> get(
       {required String endpoint,
@@ -47,15 +48,21 @@ class NetworkServiceImpl extends NetworkService with Parser {
       Map<String, String>? query}) async {
     if (await isConnected) {
       headers ??= apiInfo.defaultHeader;
+
       var uri = Uri.parse(buildUrl(endpoint));
       if (query != null) {
         uri = uri.replace(queryParameters: query);
       }
+      for (var i = 0; i < maxRetries; i++) {
+        final response = await client
+            .get(uri, headers: headers)
+            .timeout(const Duration(seconds: 30), onTimeout: onTimeout);
+        if (response.statusCode == 408 && i != maxRetries - 1) {
+          continue;
+        }
 
-      final response = await client
-          .get(uri, headers: headers)
-          .timeout(const Duration(seconds: 30), onTimeout: onTimeout);
-      return processResponse(response);
+        return processResponse(response);
+      }
     }
     return (const InternetConnectionFailure(), null);
   }
@@ -73,12 +80,16 @@ class NetworkServiceImpl extends NetworkService with Parser {
       if (encodedData.$1 != null) {
         return (const JsonEncodeFailure(), null);
       }
+      for (var i = 0; i < maxRetries; i++) {
+        final response = await client
+            .post(uri, headers: headers, body: encodedData.$2)
+            .timeout(const Duration(seconds: 30), onTimeout: onTimeout);
+        if (response.statusCode == 408 && i != maxRetries - 1) {
+          continue;
+        }
 
-      final response = await client
-          .post(uri, headers: headers, body: encodedData.$2)
-          .timeout(const Duration(seconds: 30), onTimeout: onTimeout);
-
-      return processResponse(response);
+        return processResponse(response);
+      }
     }
     return (const InternetConnectionFailure(), null);
   }

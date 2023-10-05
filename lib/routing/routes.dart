@@ -1,18 +1,30 @@
-import 'package:go_router/go_router.dart';
-import 'package:invisquery/Features/Auth/Page/View/login_screen.dart';
-import 'package:invisquery/Features/Home/Page/Views/home_screen.dart';
+import 'package:auto_route/auto_route.dart';
+import 'package:flutter/material.dart';
+import 'package:invisquery/routing/routes.gr.dart';
 
-import '../Features/SplashScreen/Page/Views/splash_screen.dart';
+@AutoRouterConfig(replaceInRouteName: 'Page,Route')
+class AppRouter extends $AppRouter {
+  @override
+  RouteType get defaultRouteType => RouteType.custom(
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          return FadeTransition(
+            opacity: animation,
+            child: child,
+          );
+        },
+      ); //.cupertino, .adaptive ..etc
 
-class AppRoutes {
-  get routes => GoRouter(routes: router);
-
-  List<GoRoute> router = [
-    GoRoute(
+  @override
+  final List<AutoRoute> routes = <CustomRoute>[
+    CustomRoute(path: '/home', page: Home.page),
+    CustomRoute(
       path: '/auth',
-      builder: (context, state) => const LoginScreen(),
+      page: Login.page,
     ),
-    GoRoute(path: '/', builder: (context, state) => const SplashScreen()),
-    GoRoute(path: '/home', builder: (context, state) => const HomeScreen()),
+    CustomRoute(
+      path: '/',
+      initial: true,
+      page: Splash.page,
+    ),
   ];
 }

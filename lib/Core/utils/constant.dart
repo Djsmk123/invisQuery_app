@@ -1,6 +1,5 @@
 class APIInfo {
-  String getBaseUrl() =>
-      "https://askme-backend-ei6l.onrender.com"; //"http://192.168.0.110";
+  String getBaseUrl() => "https://askme-backend-ei6l.onrender.com";
 
   String subBaseUrl() => "/api";
 

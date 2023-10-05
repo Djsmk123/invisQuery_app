@@ -7,9 +7,9 @@ import 'dart:async' as _i4;
 import 'dart:convert' as _i7;
 import 'dart:typed_data' as _i8;
 
-import 'package:http/http.dart' as _i3;
+import 'package:http/http.dart' as _i2;
 import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart'
-    as _i2;
+    as _i3;
 import 'package:mockito/mockito.dart' as _i1;
 import 'package:pretty_http_logger/src/middleware/http_with_middleware.dart'
     as _i5;
@@ -37,9 +37,8 @@ class _FakeDuration_0 extends _i1.SmartFake implements Duration {
         );
 }
 
-class _FakeAddressCheckResult_1 extends _i1.SmartFake
-    implements _i2.AddressCheckResult {
-  _FakeAddressCheckResult_1(
+class _FakeResponse_1 extends _i1.SmartFake implements _i2.Response {
+  _FakeResponse_1(
     Object parent,
     Invocation parentInvocation,
   ) : super(
@@ -48,22 +47,12 @@ class _FakeAddressCheckResult_1 extends _i1.SmartFake
         );
 }
 
-class _FakeResponse_2 extends _i1.SmartFake implements _i3.Response {
-  _FakeResponse_2(
-    Object parent,
-    Invocation parentInvocation,
-  ) : super(
-          parent,
-          parentInvocation,
-        );
-}
-
-/// A class which mocks [InternetConnectionCheckerPlus].
+/// A class which mocks [InternetConnection].
 ///
 /// See the documentation for Mockito's code generation for more information.
-class MockInternetConnectionCheckerPlus extends _i1.Mock
-    implements _i2.InternetConnectionCheckerPlus {
-  MockInternetConnectionCheckerPlus() {
+class MockInternetConnection extends _i1.Mock
+    implements _i3.InternetConnection {
+  MockInternetConnection() {
     _i1.throwOnMissingStub(this);
   }
 
@@ -75,72 +64,25 @@ class MockInternetConnectionCheckerPlus extends _i1.Mock
           Invocation.getter(#checkInterval),
         ),
       ) as Duration);
+
   @override
-  Duration get checkTimeout => (super.noSuchMethod(
-        Invocation.getter(#checkTimeout),
-        returnValue: _FakeDuration_0(
-          this,
-          Invocation.getter(#checkTimeout),
-        ),
-      ) as Duration);
-  @override
-  List<_i2.AddressCheckOptions> get addresses => (super.noSuchMethod(
-        Invocation.getter(#addresses),
-        returnValue: <_i2.AddressCheckOptions>[],
-      ) as List<_i2.AddressCheckOptions>);
-  @override
-  set addresses(List<_i2.AddressCheckOptions>? value) => super.noSuchMethod(
-        Invocation.setter(
-          #addresses,
-          value,
-        ),
-        returnValueForMissingStub: null,
-      );
-  @override
-  _i4.Future<bool> get hasConnection => (super.noSuchMethod(
-        Invocation.getter(#hasConnection),
+  _i4.Future<bool> get hasInternetAccess => (super.noSuchMethod(
+        Invocation.getter(#hasInternetAccess),
         returnValue: _i4.Future<bool>.value(false),
       ) as _i4.Future<bool>);
+
   @override
-  _i4.Future<_i2.InternetConnectionStatus> get connectionStatus =>
-      (super.noSuchMethod(
-        Invocation.getter(#connectionStatus),
-        returnValue: _i4.Future<_i2.InternetConnectionStatus>.value(
-            _i2.InternetConnectionStatus.connected),
-      ) as _i4.Future<_i2.InternetConnectionStatus>);
-  @override
-  _i4.Stream<_i2.InternetConnectionStatus> get onStatusChange =>
-      (super.noSuchMethod(
-        Invocation.getter(#onStatusChange),
-        returnValue: _i4.Stream<_i2.InternetConnectionStatus>.empty(),
-      ) as _i4.Stream<_i2.InternetConnectionStatus>);
-  @override
-  bool get hasListeners => (super.noSuchMethod(
-        Invocation.getter(#hasListeners),
-        returnValue: false,
-      ) as bool);
-  @override
-  bool get isActivelyChecking => (super.noSuchMethod(
-        Invocation.getter(#isActivelyChecking),
-        returnValue: false,
-      ) as bool);
-  @override
-  _i4.Future<_i2.AddressCheckResult> isHostReachable(
-          _i2.AddressCheckOptions? options) =>
-      (super.noSuchMethod(
-        Invocation.method(
-          #isHostReachable,
-          [options],
-        ),
+  _i4.Future<_i3.InternetStatus> get internetStatus => (super.noSuchMethod(
+        Invocation.getter(#internetStatus),
         returnValue:
-            _i4.Future<_i2.AddressCheckResult>.value(_FakeAddressCheckResult_1(
-          this,
-          Invocation.method(
-            #isHostReachable,
-            [options],
-          ),
-        )),
-      ) as _i4.Future<_i2.AddressCheckResult>);
+            _i4.Future<_i3.InternetStatus>.value(_i3.InternetStatus.connected),
+      ) as _i4.Future<_i3.InternetStatus>);
+
+  @override
+  _i4.Stream<_i3.InternetStatus> get onStatusChange => (super.noSuchMethod(
+        Invocation.getter(#onStatusChange),
+        returnValue: _i4.Stream<_i3.InternetStatus>.empty(),
+      ) as _i4.Stream<_i3.InternetStatus>);
 }
 
 /// A class which mocks [HttpWithMiddleware].
@@ -161,6 +103,7 @@ class MockHttpWithMiddleware extends _i1.Mock
         ),
         returnValueForMissingStub: null,
       );
+
   @override
   set requestTimeout(Duration? _requestTimeout) => super.noSuchMethod(
         Invocation.setter(
@@ -169,8 +112,9 @@ class MockHttpWithMiddleware extends _i1.Mock
         ),
         returnValueForMissingStub: null,
       );
+
   @override
-  _i4.Future<_i3.Response> head(
+  _i4.Future<_i2.Response> head(
     Uri? url, {
     Map<String, String>? headers,
   }) =>
@@ -180,7 +124,7 @@ class MockHttpWithMiddleware extends _i1.Mock
           [url],
           {#headers: headers},
         ),
-        returnValue: _i4.Future<_i3.Response>.value(_FakeResponse_2(
+        returnValue: _i4.Future<_i2.Response>.value(_FakeResponse_1(
           this,
           Invocation.method(
             #head,
@@ -188,9 +132,10 @@ class MockHttpWithMiddleware extends _i1.Mock
             {#headers: headers},
           ),
         )),
-      ) as _i4.Future<_i3.Response>);
+      ) as _i4.Future<_i2.Response>);
+
   @override
-  _i4.Future<_i3.Response> get(
+  _i4.Future<_i2.Response> get(
     Uri? url, {
     Map<String, String>? headers,
   }) =>
@@ -200,7 +145,7 @@ class MockHttpWithMiddleware extends _i1.Mock
           [url],
           {#headers: headers},
         ),
-        returnValue: _i4.Future<_i3.Response>.value(_FakeResponse_2(
+        returnValue: _i4.Future<_i2.Response>.value(_FakeResponse_1(
           this,
           Invocation.method(
             #get,
@@ -208,9 +153,10 @@ class MockHttpWithMiddleware extends _i1.Mock
             {#headers: headers},
           ),
         )),
-      ) as _i4.Future<_i3.Response>);
+      ) as _i4.Future<_i2.Response>);
+
   @override
-  _i4.Future<_i3.Response> post(
+  _i4.Future<_i2.Response> post(
     Uri? url, {
     Map<String, String>? headers,
     dynamic body,
@@ -226,7 +172,7 @@ class MockHttpWithMiddleware extends _i1.Mock
             #encoding: encoding,
           },
         ),
-        returnValue: _i4.Future<_i3.Response>.value(_FakeResponse_2(
+        returnValue: _i4.Future<_i2.Response>.value(_FakeResponse_1(
           this,
           Invocation.method(
             #post,
@@ -238,9 +184,10 @@ class MockHttpWithMiddleware extends _i1.Mock
             },
           ),
         )),
-      ) as _i4.Future<_i3.Response>);
+      ) as _i4.Future<_i2.Response>);
+
   @override
-  _i4.Future<_i3.Response> put(
+  _i4.Future<_i2.Response> put(
     Uri? url, {
     Map<String, String>? headers,
     dynamic body,
@@ -256,7 +203,7 @@ class MockHttpWithMiddleware extends _i1.Mock
             #encoding: encoding,
           },
         ),
-        returnValue: _i4.Future<_i3.Response>.value(_FakeResponse_2(
+        returnValue: _i4.Future<_i2.Response>.value(_FakeResponse_1(
           this,
           Invocation.method(
             #put,
@@ -268,9 +215,10 @@ class MockHttpWithMiddleware extends _i1.Mock
             },
           ),
         )),
-      ) as _i4.Future<_i3.Response>);
+      ) as _i4.Future<_i2.Response>);
+
   @override
-  _i4.Future<_i3.Response> patch(
+  _i4.Future<_i2.Response> patch(
     Uri? url, {
     Map<String, String>? headers,
     dynamic body,
@@ -286,7 +234,7 @@ class MockHttpWithMiddleware extends _i1.Mock
             #encoding: encoding,
           },
         ),
-        returnValue: _i4.Future<_i3.Response>.value(_FakeResponse_2(
+        returnValue: _i4.Future<_i2.Response>.value(_FakeResponse_1(
           this,
           Invocation.method(
             #patch,
@@ -298,9 +246,10 @@ class MockHttpWithMiddleware extends _i1.Mock
             },
           ),
         )),
-      ) as _i4.Future<_i3.Response>);
+      ) as _i4.Future<_i2.Response>);
+
   @override
-  _i4.Future<_i3.Response> delete(
+  _i4.Future<_i2.Response> delete(
     Uri? url, {
     Map<String, String>? headers,
     dynamic body,
@@ -316,7 +265,7 @@ class MockHttpWithMiddleware extends _i1.Mock
             #encoding: encoding,
           },
         ),
-        returnValue: _i4.Future<_i3.Response>.value(_FakeResponse_2(
+        returnValue: _i4.Future<_i2.Response>.value(_FakeResponse_1(
           this,
           Invocation.method(
             #delete,
@@ -328,7 +277,8 @@ class MockHttpWithMiddleware extends _i1.Mock
             },
           ),
         )),
-      ) as _i4.Future<_i3.Response>);
+      ) as _i4.Future<_i2.Response>);
+
   @override
   _i4.Future<String> read(
     Uri? url, {
@@ -342,6 +292,7 @@ class MockHttpWithMiddleware extends _i1.Mock
         ),
         returnValue: _i4.Future<String>.value(''),
       ) as _i4.Future<String>);
+
   @override
   _i4.Future<_i8.Uint8List> readBytes(
     Uri? url, {

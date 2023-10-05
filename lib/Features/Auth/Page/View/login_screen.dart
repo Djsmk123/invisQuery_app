@@ -1,3 +1,4 @@
+import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
@@ -9,6 +10,7 @@ import 'package:invisquery/Core/widgets/custom_text_field.dart';
 import 'package:invisquery/Core/widgets/rounded_button.dart';
 import 'package:invisquery/Features/Auth/Page/Bloc/login/login_bloc.dart';
 
+@RoutePage(name: 'Login')
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -58,7 +60,10 @@ class _LoginScreenState extends State<LoginScreen> with ValidationMixin {
             if (state is LoginSuccess) {
               EasyLoading.dismiss();
               EasyLoading.showSuccess(
-                  "Welcome to InvisQuery ${state.authModel.user.email}");
+                      "Welcome to InvisQuery ${state.authModel.user.email}")
+                  .then((value) {
+                context.router.replaceNamed('/home');
+              });
             }
             if (state is LoginPasswordResetSuccess) {
               EasyLoading.dismiss();
@@ -83,7 +88,7 @@ class _LoginScreenState extends State<LoginScreen> with ValidationMixin {
                     key: formState,
                     child: SingleChildScrollView(
                       child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
                           Center(
                               child: Text(

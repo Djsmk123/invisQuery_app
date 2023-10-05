@@ -12,17 +12,17 @@ import 'package:pretty_http_logger/pretty_http_logger.dart';
 
 import 'network_test.mocks.dart';
 
-@GenerateMocks([InternetConnectionCheckerPlus])
+@GenerateMocks([InternetConnection])
 @GenerateMocks([HttpWithMiddleware])
 void main() {
   group('NetworkServiceImpl', () {
     late NetworkServiceImpl networkServiceImpl;
-    late InternetConnectionCheckerPlus connectionChecker;
+    late InternetConnection connectionChecker;
     late APIInfo apiInfo;
 
     late MockHttpWithMiddleware httpClient;
     setUpAll(() {
-      connectionChecker = MockInternetConnectionCheckerPlus();
+      connectionChecker = MockInternetConnection();
       apiInfo = APIInfo();
       httpClient = MockHttpWithMiddleware();
       networkServiceImpl = NetworkServiceImpl(connectionChecker, httpClient);
@@ -31,7 +31,8 @@ void main() {
     group('check connection', () {
       group('if connection available', () {
         setUpAll(() {
-          when(connectionChecker.hasConnection).thenAnswer((_) async => true);
+          when(connectionChecker.hasInternetAccess)
+              .thenAnswer((_) async => true);
         });
         group('get-request', () {
           test('should return API Response if get request is successful',
@@ -130,7 +131,8 @@ void main() {
             final response = http.Response(
                 '{"status_code": 404, "message": "Succeed post request", "data": [], "success": false}',
                 404);
-            when(connectionChecker.hasConnection).thenAnswer((_) async => true);
+            when(connectionChecker.hasInternetAccess)
+                .thenAnswer((_) async => true);
             when(httpClient.post(url,
                     headers: apiInfo.defaultHeader, body: jsonEncode(tBody)))
                 .thenAnswer((_) async => response);
@@ -148,7 +150,8 @@ void main() {
 
       group('if not internet available', () {
         setUpAll(() {
-          when(connectionChecker.hasConnection).thenAnswer((_) async => false);
+          when(connectionChecker.hasInternetAccess)
+              .thenAnswer((_) async => false);
         });
 
         group('get-request', () {

@@ -28,8 +28,7 @@ Future<void> setUp() async {
   getIt.registerLazySingleton(() => storage);
 
   getIt.registerLazySingleton(() => http.Client());
-  final InternetConnectionCheckerPlus checkerPlus =
-      InternetConnectionCheckerPlus();
+  final InternetConnection checkerPlus = InternetConnection();
   getIt.registerLazySingleton(() => checkerPlus);
   Logger logger = Logger(
     printer: PrettyPrinter(

@@ -1,7 +1,10 @@
 import 'package:auto_route/annotations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:invisquery/Core/utils/color_config.dart';
+import 'package:invisquery/Core/utils/exts.dart';
 import 'package:invisquery/Features/Auth/Data/DataSource/auth_repo_impl.dart';
+import 'package:invisquery/Features/Auth/Data/Models/user_model.dart';
 
 import '../../../../get_init.dart';
 
@@ -14,32 +17,23 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  AuthRepoImpl authRepo = getIt.get<AuthRepoImpl>();
-
+  UserModel? user = getIt.get<AuthRepoImpl>().user;
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: ColorConfig.kGrayColor.withOpacity(0.5),
+        elevation: 1,
         leading: Padding(
           padding: const EdgeInsets.all(5),
           child: CircleAvatar(
-            backgroundImage: NetworkImage(authRepo.user!.publicProfileImage),
+            backgroundImage: NetworkImage(user!.privateProfileImage),
           ),
         ),
         title: Text(
-          "Hello ${authRepo.user!.username.split('@')[0]}",
-          style: TextStyle(color: Colors.white, fontSize: 12.sp),
+          "${user?.getUserName().capitalizeFirstLetter()}",
+          style: TextStyle(color: Colors.white, fontSize: 14.sp),
         ),
-        actions: [
-          IconButton(
-              onPressed: () {},
-              icon: Icon(
-                Icons.circle_notifications_outlined,
-                color: Colors.white,
-                size: 35.r,
-              ))
-        ],
       ),
     );
   }

@@ -184,6 +184,7 @@ class AuthRepoImpl extends AuthRepo {
       return (null, accessToken);
     }
     final res = await storageService.readStorage('token');
+
     if (res.$1 != null) {
       return (res.$1, null);
     }

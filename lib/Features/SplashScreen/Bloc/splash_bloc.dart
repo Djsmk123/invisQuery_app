@@ -15,22 +15,21 @@ class SplashBloc extends Bloc<SplashEvent, SplashState> {
         try {
           final res = await authRepoImpl.getAccessToken();
           if (res.$1 != null) {
-            emitState(false);
+            emit(const SplashLoadingSuccess(false));
           } else {
             //fetch user using access token
             final user = await authRepoImpl.getUser();
             if (user.$1 != null) {
-              emitState(false);
+              emit(const SplashLoadingSuccess(false));
             } else {
               emit(const SplashLoadingSuccess(true));
             }
           }
         } catch (e) {
           log(e.toString());
-          emitState(false);
+          emit(const SplashLoadingSuccess(false));
         }
       }
     });
   }
-  void emitState(bool value) => emit(SplashLoadingSuccess(value));
 }

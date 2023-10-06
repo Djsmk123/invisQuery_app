@@ -50,4 +50,5 @@ class UserModel extends Equatable {
         createdAt,
         updatedAt
       ];
+  String getUserName() => username.split("@").first;
 }

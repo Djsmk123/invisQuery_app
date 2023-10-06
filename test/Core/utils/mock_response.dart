@@ -1,13 +1,16 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart';
 import 'package:invisquery/Core/Errors/failure.dart';
 import 'package:invisquery/Core/Model/network_response.dart';
 import 'package:invisquery/Core/utils/constant.dart';
+import 'package:logger/logger.dart';
 import 'package:mockito/mockito.dart';
 
 import '../Network/network_test.mocks.dart';
+import 'storage_test.mocks.dart';
 
 var errTokenExpired = "token is expired";
 var errInvalidToken = "invalid authorization header";
@@ -53,13 +56,22 @@ Response successResponse({
 class MockApiResponseHelper {
   final MockHttpWithMiddleware mockClient;
   final APIInfo apiInfo;
-
-  MockApiResponseHelper({required this.mockClient, required this.apiInfo});
+  final MockFlutterSecureStorage storage;
+  Logger logger = Logger();
+  MockApiResponseHelper({
+    required this.mockClient,
+    required this.apiInfo,
+    required this.storage,
+  });
   void mockPostResponse(Map<String, dynamic> tBody, Response response,
-      {Map<String, String>? headers, required Uri url}) {
+      {Map<String, String> headers = const {}, required Uri url}) {
+    logger.d(tBody.toString());
+    logger.d(response.body.toString());
+    debugPrint(headers.toString());
+    logger.d(url.toString());
     when(mockClient.post(
       url,
-      headers: headers ?? apiInfo.defaultHeader,
+      headers: headers.isEmpty ? apiInfo.defaultHeader : headers,
       body: jsonEncode(tBody),
     )).thenAnswer((v) async => response);
   }
@@ -75,5 +87,18 @@ class MockApiResponseHelper {
       url,
       headers: headers ?? apiInfo.defaultHeader,
     )).thenAnswer((v) async => response);
+  }
+
+  void mockToken(String? token) {
+    when(storage.read(key: "token")).thenAnswer((_) => Future.value(token));
+  }
+
+  void mockDeleteToken() {
+    when(storage.deleteAll()).thenAnswer((_) => Future.value());
+  }
+
+  void mockStorageWriteToken(String tToken) {
+    when(storage.write(key: 'token', value: tToken))
+        .thenAnswer((_) => Future.value());
   }
 }

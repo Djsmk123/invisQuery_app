@@ -27,21 +27,6 @@ void main() {
   late Uri url;
   late MockApiResponseHelper mockApiResponseHelper;
 
-  void mockStorageWriteToken(String tToken) {
-    when(mockFlutterSecureStorage.write(key: 'token', value: tToken))
-        .thenAnswer((_) => Future.value());
-  }
-
-  void mockStorageReadToken() {
-    when(mockFlutterSecureStorage.read(key: "token"))
-        .thenAnswer((_) => Future.value());
-  }
-
-  void mockStorageDeleteToken() {
-    when(mockFlutterSecureStorage.deleteAll())
-        .thenAnswer((_) => Future.value());
-  }
-
   Future<(Failure?, AuthModel?)> performLogin(
     Uri url,
     String email,
@@ -54,7 +39,7 @@ void main() {
       'password': password,
       'fcm_token': fcmToken,
     };
-    mockStorageWriteToken(tToken);
+    mockApiResponseHelper.mockStorageWriteToken(tToken);
     mockApiResponseHelper.mockPostResponse(tBody, response, url: url);
 
     return await authRepo.login(email, password, fcmToken);
@@ -88,7 +73,7 @@ void main() {
       'fcm_token': fcmToken,
     };
 
-    mockStorageWriteToken(tToken);
+    mockApiResponseHelper.mockStorageWriteToken(tToken);
     mockApiResponseHelper.mockPostResponse(tBody, response, url: url);
 
     return await authRepo.signUp(email, password, fcmToken);
@@ -150,8 +135,10 @@ void main() {
         NetworkServiceImpl(mockInternetConnectionChecker, mockClient);
     storageService = StorageService(mockFlutterSecureStorage);
     authRepo = AuthRepoImpl(networkServiceImpl, storageService);
-    mockApiResponseHelper =
-        MockApiResponseHelper(mockClient: mockClient, apiInfo: apiInfo);
+    mockApiResponseHelper = MockApiResponseHelper(
+        mockClient: mockClient,
+        apiInfo: apiInfo,
+        storage: mockFlutterSecureStorage);
     when(mockInternetConnectionChecker.hasInternetAccess)
         .thenAnswer((_) async => true);
   });
@@ -220,7 +207,7 @@ void main() {
     setUpAll(() {
       tEndpoint = '/create-ano-user';
       url = Uri.parse(networkServiceImpl.buildUrl(tEndpoint));
-      mockStorageWriteToken(tToken);
+      mockApiResponseHelper.mockStorageWriteToken(tToken);
     });
     test('should return AuthModel on success login', () async {
       final result =
@@ -248,7 +235,7 @@ void main() {
       provider = "google";
       privateProfileImage =
           "https://xsgames.co/randomusers/assets/avatars/pixel/24.jpg";
-      mockStorageWriteToken(tToken);
+      mockApiResponseHelper.mockStorageWriteToken(tToken);
     });
     test('should return AuthModel on success login', () async {
       final result = await performSocialLogin(url, email, provider,
@@ -306,8 +293,6 @@ void main() {
       headers['authorization'] = "Bearer $tToken";
       mockApiResponseHelper.mockGetResponse(response,
           url: url, headers: headers);
-      mockApiResponseHelper.mockGetResponse(response,
-          url: url, headers: headers);
     } else {
       mockApiResponseHelper.mockGetResponse(response, url: url);
     }
@@ -317,14 +302,9 @@ void main() {
 
   Future<(Failure?, UserModel?)> fetchUser(
       String? tToken, Response response) async {
-    if (tToken != null) {
-      Map<String, String> headers = {'content-type': 'application/json'};
-      headers['authorization'] = "Bearer ${null}";
-      mockApiResponseHelper.mockGetResponse(response,
-          url: url, headers: headers);
-    } else {
-      mockApiResponseHelper.mockGetResponse(response, url: url);
-    }
+    Map<String, String> headers = {'content-type': 'application/json'};
+    headers['authorization'] = "Bearer $tToken";
+    mockApiResponseHelper.mockGetResponse(response, url: url, headers: headers);
 
     return await authRepo.getUser();
   }
@@ -333,8 +313,8 @@ void main() {
     setUpAll(() {
       tEndpoint = '/logout';
       url = Uri.parse(networkServiceImpl.buildUrl(tEndpoint));
-      mockStorageReadToken();
-      mockStorageDeleteToken();
+      mockApiResponseHelper.mockToken(tToken);
+      mockApiResponseHelper.mockDeleteToken();
     });
 
     test('should return failure message if token is invalid', () async {
@@ -370,8 +350,8 @@ void main() {
     setUpAll(() {
       tEndpoint = '/delete-user';
       url = Uri.parse(networkServiceImpl.buildUrl(tEndpoint));
-      mockStorageReadToken();
-      mockStorageDeleteToken();
+      mockApiResponseHelper.mockToken(tToken);
+      mockApiResponseHelper.mockDeleteToken();
     });
 
     test('should return failure message if token is invalid', () async {
@@ -408,7 +388,7 @@ void main() {
     setUpAll(() {
       tEndpoint = '/get-user';
       url = Uri.parse(networkServiceImpl.buildUrl(tEndpoint));
-      mockStorageReadToken();
+      mockApiResponseHelper.mockToken(tToken);
     });
 
     test('should return failure message if token is invalid', () async {
